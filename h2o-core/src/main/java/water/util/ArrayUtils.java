@@ -1,5 +1,7 @@
 package water.util;
 
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import water.*;
 import water.fvec.*;
 
@@ -1637,8 +1639,97 @@ public class ArrayUtils {
   }
 
   public static boolean isSorted(int[] vals) {
-    for(int i = 1; i < vals.length; ++i)
-      if(vals[i-1] > vals[i]) return false;
+    for (int i = 1; i < vals.length; ++i)
+      if (vals[i - 1] > vals[i]) return false;
     return true;
+  }
+
+  /**
+   * This method will calculate the importance of principal components for PCA/GLRM methods.
+   *
+   * @param std_deviation: array of singular values
+   * @param totVar: sum of squared singular values
+   * @param vars: array of singular values squared
+   * @param prop_var: var[i]/totVar for each i
+   * @param cum_var: cumulative sum of var[i]/totVar from index 0 to index i.
+   */
+  public static void generateIPC(double[] std_deviation, double totVar, double[] vars, double[] prop_var,
+                                 double[] cum_var) {
+    int arrayLen = std_deviation.length;
+
+    if (totVar > 0) {
+      for (int i = 0; i < arrayLen; i++) {
+        vars[i] = std_deviation[i] * std_deviation[i];
+        prop_var[i] = vars[i] / totVar;
+        cum_var[i] = i == 0 ? prop_var[0] : cum_var[i-1] + prop_var[i];
+      }
+    }
+  }
+
+
+  /**
+   * Create the scoring history for dimension reduction algorithms like PCA/SVD.  We do make the following assumptions
+   * about your scoring_history.  First we assume that you will always have the following field:
+   * 1. training_time_ms;
+   * 2. timestamp;
+   * 3. iteration.
+   *
+   * Second, we assume that you will have at most 5 fields.  Hence, you can either add average_SEE or ERR.
+   * @param fieldNames
+   * @param training_time_ms
+   * @param averSEE or err
+   * @param eigenVectorIndex
+   * @param tableName
+   * @return
+   */
+  public static TwoDimTable createScoringHistoryTableDR(String[] fieldNames, ArrayList<Long> training_time_ms,
+                                                        ArrayList<Double> averSEE, ArrayList<Double> eigenVectorIndex,
+                                                        String tableName, long startTime) {
+    List<String> colHeaders = new ArrayList<>();
+    List<String> colTypes = new ArrayList<>();
+    List<String> colFormat = new ArrayList<>();
+    Boolean seeField = (averSEE != null);
+    Boolean eigField = (eigenVectorIndex != null);
+
+    for (String fieldName:fieldNames) {
+      switch(fieldName) {
+        case "Timestamp": colHeaders.add("Timestamp"); colTypes.add("string"); colFormat.add("%s"); break;
+        case "Duration":  colHeaders.add("Duration"); colTypes.add("string"); colFormat.add("%s"); break;
+        case "Iteration": colHeaders.add("Iteration"); colTypes.add("long"); colFormat.add("%d"); break;
+        default: colHeaders.add(fieldName); colTypes.add("double"); colFormat.add("%d");
+      }
+    }
+
+    int rows = training_time_ms.size(); // number of entries of training history
+
+    TwoDimTable table = new TwoDimTable(
+            tableName, null,
+            new String[rows],
+            colHeaders.toArray(new String[0]),
+            colTypes.toArray(new String[0]),
+            colFormat.toArray(new String[0]),
+            "");
+
+    for (int row = 0; row < rows; row++) {
+      int col = 0;
+      assert (row < table.getRowDim());
+      assert (col < table.getColDim());
+
+      // take care of Timestamp, Duration, Iteration.
+      DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
+      table.set(row, col++, fmt.print(training_time_ms.get(row)));
+      table.set(row, col++, PrettyPrint.msecs(training_time_ms.get(row) - startTime, true));
+      table.set(row, col++, row);
+
+      // take care of the extra field
+      if (seeField) {
+        table.set(row, col++, averSEE.get(row));
+      }
+
+      if (eigField) {
+        table.set(row, col, eigenVectorIndex.get(row));
+      }
+    }
+    return table;
   }
 }
