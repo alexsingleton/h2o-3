@@ -235,7 +235,7 @@ public class RegisterV3Api extends AbstractRegister {
             "Export given model as Mojo.");
 
     RequestServer.registerEndpoint("exportModelDetails",
-            "GET /99/Models.bin/{model_id}/json", ModelsHandler.class, "exportModelDetails",
+            "GET /99/Models/{model_id}/json", ModelsHandler.class, "exportModelDetails",
             "Export given model details in json format.");
 
     RequestServer.registerEndpoint("grid",
