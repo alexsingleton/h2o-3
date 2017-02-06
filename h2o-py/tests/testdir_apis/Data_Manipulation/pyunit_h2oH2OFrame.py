@@ -22,10 +22,10 @@ def h2o_H2OFrame():
         h2oframe = h2o.H2OFrame(python_obj=python_lists, destination_frame=dest_frame, header=heads, separator=sep,
                                 column_names=col_names, column_types=col_types, na_strings=na_str)
         assert_is_type(h2oframe, H2OFrame)
-
-
+        assert h2oframe.ncols==h2oframe.nrows and h2oframe.ncols==len(python_lists), "h2o.H2OFrame() command is " \
+                                                                                     "not working."
     except Exception as e:
-        assert False, "h2o.H2OFrame() command not is working."
+        assert False, "h2o.H2OFrame() command is not working."
 
 if __name__ == "__main__":
     pyunit_utils.standalone_test(h2o_H2OFrame())
