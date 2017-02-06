@@ -744,7 +744,7 @@ class ModelBase(backwards_compatible()):
         assert_is_type(path, str)
         assert_is_type(force, bool)
         path = os.path.join(os.getcwd() if path == "" else path, self.model_id + ".json")
-        return h2o.api("GET /99/Models.bin/%s/json" % self.model_id, data={"dir": path, "force": force})["dir"]
+        return h2o.api("GET /99/Models/%s/json" % self.model_id, data={"dir": path, "force": force})["dir"]
 
     @staticmethod
     def _get_metrics(o, train, valid, xval):

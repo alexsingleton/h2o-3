@@ -206,7 +206,7 @@ h2o.saveModelDetails <- function(object, path="", force=FALSE) {
   if(!is.character(path) || length(path) != 1L || is.na(path)) stop("`path` must be a character string")
   if(!is.logical(force) || length(force) != 1L || is.na(force)) stop("`force` must be TRUE or FALSE")
   path <- file.path(path, "/" ,object@model_id, ".json", fsep = "")
-  res <- .h2o.__remoteSend(paste0("Models.bin/",object@model_id,"/json"),dir=path,force=force,h2oRestApiVersion=99)
+  res <- .h2o.__remoteSend(paste0("Models/",object@model_id,"/json"),dir=path,force=force,h2oRestApiVersion=99)
   res$dir
 }
 
